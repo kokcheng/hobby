@@ -49,6 +49,43 @@
 </head>
 <body class="font-sans bg-white text-gray-900 antialiased" x-data="landingPage()">
 
+  <!-- ─── Password Gate Overlay ───────────────────────────────────────────── -->
+  <div id="password-gate"
+       role="dialog"
+       aria-modal="true"
+       aria-labelledby="gate-title"
+       class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/80 backdrop-blur-sm"
+       style="display: none;">
+    <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm mx-4">
+      <h2 id="gate-title" class="text-xl font-bold text-gray-900 text-center">
+        Password Required
+      </h2>
+      <p class="mt-2 text-sm text-gray-600 text-center">
+        Enter the password to continue to StartHobby.
+      </p>
+      <form id="gate-form" class="mt-6" novalidate>
+        <label for="gate-password" class="block text-sm font-medium text-gray-700 mb-1">
+          Password
+        </label>
+        <input
+          id="gate-password"
+          type="password"
+          maxlength="128"
+          autocomplete="current-password"
+          class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-sm"
+          placeholder="Enter password"
+        />
+        <div id="gate-error" aria-live="assertive" class="mt-2 text-sm text-red-600 min-h-[1.25rem]"></div>
+        <button
+          type="submit"
+          class="mt-4 w-full px-4 py-2.5 bg-brand-primary text-white font-medium rounded-lg hover:bg-indigo-600 transition-colors text-sm"
+        >
+          Enter
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- ─── Navigation Bar ──────────────────────────────────────────────────── -->
   <nav x-data="{ mobileOpen: false }" class="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
     <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -71,7 +108,7 @@
           <a href="about.html" class="text-gray-600 hover:text-brand-primary transition-colors">About</a>
         </div>
 
-        <!-- Right: CTA + Coin Counter -->
+        <!-- Right: CTA + Coin Counter + Logout -->
         <div class="flex items-center gap-3">
           <!-- Coin Counter -->
           <div class="flex items-center gap-1 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-full text-sm font-medium" aria-label="Coin balance">
@@ -83,6 +120,20 @@
           <a href="onboarding.html" class="hidden md:inline-flex items-center px-4 py-2 bg-brand-primary text-white font-medium rounded-lg hover:bg-indigo-600 transition-colors text-sm">
             Start Now
           </a>
+
+          <!-- Logout Button (shown only when authenticated) -->
+          <button
+            id="logout-btn"
+            onclick="handleLogout()"
+            class="text-gray-500 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50"
+            aria-label="Logout"
+            style="display: none;"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+          </button>
 
           <!-- Mobile Hamburger Menu -->
           <button
@@ -306,6 +357,71 @@
   <!-- ─── Scripts ─────────────────────────────────────────────────────────── -->
   <script src="data.js"></script>
   <script src="utils.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    // ─── Password Gate Interaction Logic ─────────────────────────────────────
+    (function() {
+      // Run auth check on page load
+      runAuthCheck(true);
+
+      var gate = document.getElementById('password-gate');
+      var form = document.getElementById('gate-form');
+      var passwordInput = document.getElementById('gate-password');
+      var errorDiv = document.getElementById('gate-error');
+      var logoutBtn = document.getElementById('logout-btn');
+
+      // If gate is visible (user not authenticated), set initial focus and trap
+      if (gate && gate.style.display !== 'none') {
+        // Set initial focus to password input
+        passwordInput.focus();
+
+        // Focus trap: cycle Tab/Shift+Tab among gate's focusable elements
+        gate.addEventListener('keydown', function(event) {
+          if (event.key !== 'Tab') return;
+
+          var focusableElements = gate.querySelectorAll('input, button, [tabindex]:not([tabindex="-1"])');
+          var first = focusableElements[0];
+          var last = focusableElements[focusableElements.length - 1];
+
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+          }
+        });
+      }
+
+      // Form submit handler
+      if (form) {
+        form.addEventListener('submit', function(event) {
+          event.preventDefault();
+
+          var attempt = passwordInput.value;
+          var result = validatePassword(attempt);
+
+          if (result.success) {
+            // Hide gate, show content
+            gate.style.display = 'none';
+            if (logoutBtn) logoutBtn.style.display = '';
+          } else {
+            // Show error, clear input, retain focus
+            errorDiv.textContent = result.error;
+            passwordInput.value = '';
+            passwordInput.focus();
+          }
+        });
+      }
+
+      // Clear error message when user modifies input
+      if (passwordInput) {
+        passwordInput.addEventListener('input', function() {
+          errorDiv.textContent = '';
+        });
+      }
+    })();
+  </script>
   <script>
     // Toast store for Alpine.js
     function toastStore() {

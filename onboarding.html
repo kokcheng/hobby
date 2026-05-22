@@ -50,6 +50,19 @@
   </style>
 </head>
 <body class="font-sans bg-white text-gray-900 antialiased" x-data="onboardingWizard()">
+  <!-- Auth check: prevent flash of content for unauthenticated users -->
+  <script>
+    document.body.style.visibility = 'hidden';
+    try {
+      if (JSON.parse(localStorage.getItem('authState')) === 'authenticated') {
+        document.body.style.visibility = 'visible';
+      } else {
+        window.location.replace('index.html');
+      }
+    } catch(e) {
+      window.location.replace('index.html');
+    }
+  </script>
 
   <!-- ─── Navigation Bar ──────────────────────────────────────────────────── -->
   <nav x-data="{ mobileOpen: false }" class="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
@@ -85,6 +98,20 @@
           <a href="onboarding.html" class="hidden md:inline-flex items-center px-4 py-2 bg-brand-primary text-white font-medium rounded-lg hover:bg-indigo-600 transition-colors text-sm">
             Start Now
           </a>
+
+          <!-- Logout Button (shown only when authenticated) -->
+          <button
+            id="logout-btn"
+            onclick="handleLogout()"
+            class="text-gray-500 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50"
+            aria-label="Logout"
+            style="display: none;"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+          </button>
 
           <!-- Mobile Hamburger Menu -->
           <button
@@ -370,6 +397,8 @@
 
   <!-- ─── Scripts ─────────────────────────────────────────────────────────── -->
   <script src="utils.js"></script>
+  <script src="auth.js"></script>
+  <script>runAuthCheck(false);</script>
   <script>
     // Toast store for Alpine.js
     function toastStore() {
