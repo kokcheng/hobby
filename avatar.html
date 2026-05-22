@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StartHobby — Avatar Coach</title>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif']
+          },
+          colors: {
+            brand: {
+              primary: '#6366f1',
+              secondary: '#10b981'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Alpine.js CDN -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <style>
+    *:focus-visible {
+      outline: 2px solid #6366f1;
+      outline-offset: 2px;
+    }
+    [x-cloak] { display: none !important; }
+
+    /* Avatar bob animation */
+    @keyframes avatarBob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    .avatar-bob {
+      animation: avatarBob 0.8s ease-in-out infinite;
+    }
+
+    /* Typing dots animation */
+    @keyframes typingDot {
+      0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+      30% { opacity: 1; transform: translateY(-4px); }
+    }
+    .typing-dot:nth-child(1) { animation: typingDot 1.2s infinite 0s; }
+    .typing-dot:nth-child(2) { animation: typingDot 1.2s infinite 0.2s; }
+    .typing-dot:nth-child(3) { animation: typingDot 1.2s infinite 0.4s; }
+
+    /* Smooth scroll for chat */
+    .chat-scroll {
+      scroll-behavior: smooth;
+    }
+  </style>
+</head>
+<body class="font-sans bg-gray-50 text-gray-900 antialiased" x-data="avatarPage()" x-cloak>
+
+  <!-- ─── Navigation Bar ──────────────────────────────────────────────────── -->
+  <nav x-data="{ mobileOpen: false }" class="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
+    <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Logo -->
+        <a href="index.html" class="flex items-center gap-2 text-brand-primary font-bold text-xl" aria-label="StartHobby Home">
+          <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+          <span>StartHobby</span>
+        </a>
+
+        <!-- Desktop Navigation Links -->
+        <div class="hidden md:flex items-center gap-6">
+          <a href="index.html" class="text-gray-600 hover:text-brand-primary transition-colors">Home</a>
+          <a href="discovery.html" class="text-gray-600 hover:text-brand-primary transition-colors">Discover</a>
+          <a href="my-plan.html" class="text-gray-600 hover:text-brand-primary transition-colors">My Plan</a>
+          <a href="progress.html" class="text-gray-600 hover:text-brand-primary transition-colors">Progress</a>
+          <a href="avatar.html" class="text-brand-primary font-medium border-b-2 border-brand-primary pb-0.5">Avatar</a>
+          <a href="about.html" class="text-gray-600 hover:text-brand-primary transition-colors">About</a>
+        </div>
+
+        <!-- Right: CTA + Coin Counter -->
+        <div class="flex items-center gap-3">
+          <!-- Coin Counter -->
+          <div id="coin-counter" class="flex items-center gap-1 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-full text-sm font-medium" aria-label="Coin balance">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="#f59e0b"/><text x="10" y="14" text-anchor="middle" font-size="10" fill="white" font-weight="bold">$</text></svg>
+            <span x-text="coins"></span>
+          </div>
+
+          <!-- Start Now CTA (desktop) -->
+          <a href="onboarding.html" class="hidden md:inline-flex items-center px-4 py-2 bg-brand-primary text-white font-medium rounded-lg hover:bg-indigo-600 transition-colors text-sm">
+            Start Now
+          </a>
+
+          <!-- Mobile Hamburger Menu -->
+          <button
+            @click="mobileOpen = !mobileOpen"
+            class="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+            :aria-expanded="mobileOpen"
+            aria-label="Toggle navigation menu"
+          >
+            <svg x-show="!mobileOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+            <svg x-show="mobileOpen" x-cloak class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Menu Dropdown -->
+      <div x-show="mobileOpen" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" x-cloak class="md:hidden border-t border-gray-100 py-3">
+        <div class="flex flex-col gap-2">
+          <a href="index.html" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50">Home</a>
+          <a href="discovery.html" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50">Discover</a>
+          <a href="my-plan.html" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50">My Plan</a>
+          <a href="progress.html" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50">Progress</a>
+          <a href="avatar.html" class="px-3 py-2 rounded-lg text-brand-primary font-medium bg-indigo-50">Avatar</a>
+          <a href="about.html" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50">About</a>
+          <a href="onboarding.html" class="mt-2 px-3 py-2 rounded-lg bg-brand-primary text-white font-medium text-center">Start Now</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ─── Main Chat Interface ─────────────────────────────────────────────── -->
+  <main class="max-w-[1280px] mx-auto flex flex-col" style="height: calc(100vh - 64px);">
+
+    <!-- Avatar Illustration (top-centre) -->
+    <div class="flex justify-center py-4 flex-shrink-0">
+      <div
+        class="w-20 h-20 rounded-full bg-indigo-100 border-4 border-brand-primary flex items-center justify-center shadow-lg"
+        :class="{ 'avatar-bob': typing }"
+        aria-hidden="true"
+      >
+        <svg class="w-10 h-10 text-brand-primary" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Chat Messages Area -->
+    <div
+      x-ref="chatContainer"
+      class="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 chat-scroll"
+      aria-label="Chat messages"
+      role="log"
+      aria-live="polite"
+    >
+      <div class="max-w-2xl mx-auto space-y-4 pb-4">
+        <!-- Message Bubbles -->
+        <template x-for="(msg, idx) in messages" :key="idx">
+          <div :class="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
+            <div
+              :class="msg.role === 'user'
+                ? 'bg-brand-primary text-white rounded-2xl rounded-br-md px-4 py-2.5 max-w-[80%] shadow-sm'
+                : 'bg-white border border-gray-200 text-gray-800 rounded-2xl rounded-bl-md px-4 py-2.5 max-w-[80%] shadow-sm'"
+              class="text-sm leading-relaxed"
+            >
+              <span x-text="msg.text"></span>
+            </div>
+          </div>
+        </template>
+
+        <!-- Typing Indicator -->
+        <div x-show="typing" class="flex justify-start">
+          <div class="bg-white border border-gray-200 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
+            <div class="flex items-center gap-1">
+              <span class="typing-dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
+              <span class="typing-dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
+              <span class="typing-dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick-Reply Chips -->
+    <div class="flex-shrink-0 px-4 sm:px-6 lg:px-8" x-show="chips.length > 0 && !typing">
+      <div class="max-w-2xl mx-auto flex flex-wrap gap-2 pb-3">
+        <template x-for="(chip, idx) in chips" :key="idx">
+          <button
+            @click="sendChip(chip)"
+            class="px-3 py-1.5 bg-indigo-50 text-brand-primary border border-indigo-200 rounded-full text-xs font-medium hover:bg-indigo-100 hover:border-brand-primary transition-colors"
+            :aria-label="'Quick reply: ' + chip"
+          >
+            <span x-text="chip"></span>
+          </button>
+        </template>
+      </div>
+    </div>
+
+    <!-- Input Bar -->
+    <div class="flex-shrink-0 border-t border-gray-200 bg-white px-4 sm:px-6 lg:px-8 py-3">
+      <div class="max-w-2xl mx-auto">
+        <form @submit.prevent="sendMessage()" class="flex items-center gap-3">
+          <label for="chat-input" class="sr-only">Type your message</label>
+          <input
+            id="chat-input"
+            x-ref="chatInput"
+            x-model="inputText"
+            type="text"
+            placeholder="Ask your coach anything..."
+            class="flex-1 px-4 py-2.5 border border-gray-200 rounded-full text-sm focus:ring-brand-primary focus:border-brand-primary bg-gray-50"
+            autocomplete="off"
+            maxlength="500"
+          >
+          <button
+            type="submit"
+            class="flex items-center justify-center w-10 h-10 bg-brand-primary text-white rounded-full hover:bg-indigo-600 transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="!inputText.trim() || typing"
+            aria-label="Send message"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+            </svg>
+          </button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <!-- ─── Toast Notification Component ────────────────────────────────────── -->
+  <div x-data="toastStore()" x-on:show-toast.window="add($event.detail)" class="fixed top-4 right-4 z-50 flex flex-col gap-2" aria-live="polite" aria-atomic="true">
+    <template x-for="toast in toasts" :key="toast.id">
+      <div
+        x-show="toast.visible"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 translate-x-4"
+        x-transition:enter-end="opacity-100 translate-x-0"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 translate-x-0"
+        x-transition:leave-end="opacity-0 translate-x-4"
+        class="px-4 py-3 rounded-lg shadow-lg text-sm font-medium text-white max-w-xs"
+        :class="{
+          'bg-green-600': toast.type === 'success',
+          'bg-blue-600': toast.type === 'info',
+          'bg-amber-600': toast.type === 'warning'
+        }"
+        role="alert"
+      >
+        <span x-text="toast.message"></span>
+      </div>
+    </template>
+  </div>
+
+  <!-- ─── Scripts ─────────────────────────────────────────────────────────── -->
+  <script src="data.js"></script>
+  <script src="utils.js"></script>
+  <script src="avatar-engine.js"></script>
+  <script>
+    // Toast store for Alpine.js
+    function toastStore() {
+      return {
+        toasts: [],
+        add(detail) {
+          var id = Date.now();
+          var toast = { id: id, message: detail.message, type: detail.type || 'info', visible: true };
+          this.toasts.push(toast);
+          var self = this;
+          setTimeout(function() {
+            var t = self.toasts.find(function(t) { return t.id === id; });
+            if (t) t.visible = false;
+            setTimeout(function() {
+              self.toasts = self.toasts.filter(function(t) { return t.id !== id; });
+            }, 300);
+          }, 3000);
+        }
+      };
+    }
+
+    // Avatar page Alpine.js state
+    function avatarPage() {
+      return {
+        coins: 0,
+        messages: [],
+        chips: [],
+        inputText: '',
+        typing: false,
+        profile: null,
+        plan: null,
+
+        init() {
+          var self = this;
+          this.coins = getFromStorage('coins', 0);
+          this.profile = getFromStorage('hobbyUserProfile', null);
+
+          // Build plan object for avatar engine
+          this.buildPlan();
+
+          // Restore chat history from localStorage
+          var savedHistory = getFromStorage('avatarHistory', []);
+          if (savedHistory && savedHistory.length > 0) {
+            this.messages = savedHistory;
+            // Set chips from the last avatar message's context
+            this.updateChipsFromLastMessage();
+          } else {
+            // Display greeting on first load
+            this.displayGreeting();
+          }
+
+          // Auto-scroll after init
+          this.$nextTick(function() {
+            self.scrollToBottom();
+          });
+
+          // Listen for storage changes to update coins reactively
+          window.addEventListener('storage', function() {
+            self.coins = getFromStorage('coins', 0);
+          });
+        },
+
+        buildPlan() {
+          var activePlan = getActiveHobbyPlan();
+          if (activePlan) {
+            var streak = getStreak();
+            var progress = getFromStorage('hobbyProgress', {});
+            var activeHobbyId = getFromStorage('activeHobby', null);
+            var hobbyProgress = activeHobbyId ? (progress[activeHobbyId] || { completedDays: [], skippedDays: [] }) : { completedDays: [], skippedDays: [] };
+
+            this.plan = {
+              hobby: activePlan.hobby,
+              todayTask: activePlan.todayTask,
+              streak: streak,
+              completedDays: hobbyProgress.completedDays || []
+            };
+          } else {
+            this.plan = null;
+          }
+        },
+
+        displayGreeting() {
+          var greeting = getGreeting(this.profile, this.plan);
+          this.addAvatarMessage(greeting.text);
+          this.chips = greeting.chips || [];
+        },
+
+        updateChipsFromLastMessage() {
+          // Find the last avatar message and try to regenerate chips
+          // We'll use the fallback chips since we can't store chips in history
+          var greeting = getGreeting(this.profile, this.plan);
+          this.chips = greeting.chips || ["What's next?", "I'm stuck", "I completed today", "Show my plan", "Motivate me"];
+        },
+
+        sendMessage() {
+          var text = this.inputText.trim();
+          if (!text || this.typing) return;
+
+          // Clear input
+          this.inputText = '';
+
+          // Add user message
+          this.addUserMessage(text);
+
+          // Process response
+          this.processUserInput(text);
+        },
+
+        sendChip(chip) {
+          if (this.typing) return;
+
+          // Add user message
+          this.addUserMessage(chip);
+
+          // Handle special "I completed today" chip
+          if (chip === 'I completed today') {
+            this.handleCompletedToday();
+            return;
+          }
+
+          // Process as normal input
+          this.processUserInput(chip);
+        },
+
+        processUserInput(text) {
+          var self = this;
+          this.typing = true;
+
+          // Scroll to show typing indicator
+          this.$nextTick(function() {
+            self.scrollToBottom();
+          });
+
+          // Simulate 1s typing delay
+          setTimeout(function() {
+            self.typing = false;
+
+            // Get avatar response
+            var response = getAvatarResponse(text, self.profile, self.plan);
+            self.addAvatarMessage(response.text);
+            self.chips = response.chips || [];
+
+            // Scroll to latest message
+            self.$nextTick(function() {
+              self.scrollToBottom();
+            });
+          }, 1000);
+        },
+
+        handleCompletedToday() {
+          var self = this;
+          this.typing = true;
+
+          this.$nextTick(function() {
+            self.scrollToBottom();
+          });
+
+          setTimeout(function() {
+            self.typing = false;
+
+            // Mark today's task complete
+            var activeHobbyId = getFromStorage('activeHobby', null);
+            if (activeHobbyId) {
+              var allProgress = getFromStorage('hobbyProgress', {});
+              var hobbyProgress = allProgress[activeHobbyId] || {
+                completedDays: [],
+                skippedDays: [],
+                notes: {},
+                startDate: new Date().toISOString().split('T')[0],
+                weekNumber: 1
+              };
+
+              // Determine current day
+              var currentDay = (hobbyProgress.completedDays ? hobbyProgress.completedDays.length : 0) +
+                               (hobbyProgress.skippedDays ? hobbyProgress.skippedDays.length : 0) + 1;
+
+              // Only mark if not already completed and within plan
+              if (currentDay <= 7 && hobbyProgress.completedDays.indexOf(currentDay) === -1) {
+                hobbyProgress.completedDays.push(currentDay);
+                allProgress[activeHobbyId] = hobbyProgress;
+                saveToStorage('hobbyProgress', allProgress);
+
+                // Award coins
+                var newTotal = addCoins(30);
+                self.coins = newTotal;
+
+                // Update streak
+                updateStreak(true);
+
+                // Check for 7-day streak bonus
+                var streak = getStreak();
+                if (streak.current === 7) {
+                  addCoins(50);
+                  self.coins = getFromStorage('coins', 0);
+                  showToast('🔥 7-day streak! +50 bonus coins!', 'success');
+                }
+
+                // Check achievements
+                checkAchievements();
+
+                // Rebuild plan to reflect new state
+                self.buildPlan();
+
+                // Show celebration message
+                self.addAvatarMessage("🎉 Amazing work! You've completed today's task and earned 30 coins! Keep up the great momentum — consistency is the key to mastery!");
+                self.chips = ["What's next?", "Show my plan", "Motivate me"];
+
+                showToast('Task completed! +30 coins 🎉', 'success');
+              } else {
+                // Already completed or no more tasks
+                self.addAvatarMessage("Looks like you've already completed today's task — great job! Check back tomorrow for your next challenge.");
+                self.chips = ["What's next?", "Show my plan", "Motivate me"];
+              }
+            } else {
+              // No active hobby
+              self.addAvatarMessage("You don't have an active hobby plan yet. Head to the Discover page to find a hobby that fits your lifestyle!");
+              self.chips = ["What's next?", "Motivate me"];
+            }
+
+            self.$nextTick(function() {
+              self.scrollToBottom();
+            });
+          }, 1000);
+        },
+
+        addUserMessage(text) {
+          var msg = {
+            role: 'user',
+            text: text,
+            timestamp: new Date().toISOString()
+          };
+          this.messages.push(msg);
+          this.persistHistory();
+          var self = this;
+          this.$nextTick(function() {
+            self.scrollToBottom();
+          });
+        },
+
+        addAvatarMessage(text) {
+          var msg = {
+            role: 'avatar',
+            text: text,
+            timestamp: new Date().toISOString()
+          };
+          this.messages.push(msg);
+          this.persistHistory();
+        },
+
+        persistHistory() {
+          saveToStorage('avatarHistory', this.messages);
+        },
+
+        scrollToBottom() {
+          var container = this.$refs.chatContainer;
+          if (container) {
+            container.scrollTop = container.scrollHeight;
+          }
+        }
+      };
+    }
+  </script>
+</body>
+</html>

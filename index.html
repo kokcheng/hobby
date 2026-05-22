@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StartHobby — Find a hobby that fits your life</title>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif']
+          },
+          colors: {
+            brand: {
+              primary: '#6366f1',
+              secondary: '#10b981'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Alpine.js CDN -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <!-- Chart.js CDN (loaded for consistency across pages) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* Visible focus ring for accessibility */
+    *:focus-visible {
+      outline: 2px solid #6366f1;
+      outline-offset: 2px;
+    }
+    /* Hide scrollbar on hobby cards row but keep scrollable */
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="font-sans bg-white text-gray-900 antialiased" x-data="landingPage()">
+
+  <!-- ─── Navigation Bar ──────────────────────────────────────────────────── -->
+  <nav x-data="{ mobileOpen: false }" class="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
+    <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Logo -->
+        <a href="index.html" class="flex items-center gap-2 text-brand-primary font-bold text-xl" aria-label="StartHobby Home">
+          <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+          <span>StartHobby</span>
+        </a>
+
+        <!-- Desktop Navigation Links -->
+        <div class="hidden md:flex items-center gap-6">
+          <a href="index.html" class="text-brand-primary font-medium border-b-2 border-brand-primary pb-0.5">Home</a>
+          <a href="discovery.html" class="text-gray-600 hover:text-brand-primary transition-colors">Discover</a>
+          <a href="my-plan.html" class="text-gray-600 hover:text-brand-primary transition-colors">My Plan</a>
+          <a href="progress.html" class="text-gray-600 hover:text-brand-primary transition-colors">Progress</a>
+          <a href="avatar.html" class="text-gray-600 hover:text-brand-primary transition-colors">Avatar</a>
+          <a href="about.html" class="text-gray-600 hover:text-brand-primary transition-colors">About</a>
+        </div>
+
+        <!-- Right: CTA + Coin Counter -->
+        <div class="flex items-center gap-3">
+          <!-- Coin Counter -->
+          <div class="flex items-center gap-1 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-full text-sm font-medium" aria-label="Coin balance">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="#f59e0b"/><text x="10" y="14" text-anchor="middle" font-size="10" fill="white" font-weight="bold">$</text></svg>
+            <span x-text="coins"></span>
+          </div>
+
+          <!-- Start Now CTA (desktop) -->
+          <a href="onboarding.html" class="hidden md:inline-flex items-center px-4 py-2 bg-brand-primary text-white font-medium rounded-lg hover:bg-indigo-600 transition-colors text-sm">
+            Start Now
+          </a>
+
+          <!-- Mobile Hamburger Menu -->
+          <button
+            @click="mobileOpen = !mobileOpen"
+            class="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+            :aria-expanded="mobileOpen"
+            aria-label="Toggle navigation menu"
+          >
+            <svg x-show="!mobileOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+            <svg x-show="mobileOpen" x-cloak class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Menu Dropdown -->
+      <div x-show="mobileOpen" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" x-cloak class="md:hidden border-t border-gray-100 py-3">
+        <div class="flex flex-col gap-2">
+          <a href="index.html" class="px-3 py-2 rounded-lg text-brand-primary font-medium bg-indigo-50">Home</a>
+          <a href="discovery.html" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50">Discover</a>
+          <a href="my-plan.html" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50">My Plan</a>
+          <a href="progress.html" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50">Progress</a>
+          <a href="avatar.html" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50">Avatar</a>
+          <a href="about.html" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50">About</a>
+          <a href="onboarding.html" class="mt-2 px-3 py-2 rounded-lg bg-brand-primary text-white font-medium text-center">Start Now</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ─── Hero Section ────────────────────────────────────────────────────── -->
+  <section class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 text-center">
+    <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+      Find a hobby that actually<br class="hidden sm:block"> fits your life.
+    </h1>
+    <p class="mt-4 text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
+      Answer a few questions, get personalised recommendations, and follow a guided plan to start something new — in minutes, not months.
+    </p>
+    <button
+      @click="handleHeroCTA()"
+      :disabled="heroLoading"
+      class="mt-8 inline-flex items-center gap-2 px-8 py-4 bg-brand-primary text-white font-semibold text-lg rounded-xl hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-200 disabled:opacity-70 disabled:cursor-not-allowed"
+    >
+      <svg x-show="heroLoading" class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+      <span x-text="heroLoading ? 'Loading...' : 'Get Started Free'"></span>
+    </button>
+  </section>
+
+  <!-- ─── How It Works Section ────────────────────────────────────────────── -->
+  <section class="bg-gray-50 py-16 md:py-20">
+    <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-900">How It Works</h2>
+      <p class="mt-3 text-gray-600 text-center text-lg">Three simple steps to your new hobby</p>
+
+      <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Step 1 -->
+        <div class="flex flex-col items-center text-center p-6 bg-white rounded-2xl shadow-sm">
+          <div class="w-14 h-14 flex items-center justify-center rounded-full bg-indigo-100 text-brand-primary font-bold text-xl">1</div>
+          <h3 class="mt-4 text-lg font-semibold text-gray-900">Tell us about yourself</h3>
+          <p class="mt-2 text-gray-600 text-sm">Answer quick questions about your time, budget, and interests.</p>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="flex flex-col items-center text-center p-6 bg-white rounded-2xl shadow-sm">
+          <div class="w-14 h-14 flex items-center justify-center rounded-full bg-emerald-100 text-brand-secondary font-bold text-xl">2</div>
+          <h3 class="mt-4 text-lg font-semibold text-gray-900">Get matched hobbies</h3>
+          <p class="mt-2 text-gray-600 text-sm">Our engine scores hobbies against your preferences and shows the best fits.</p>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="flex flex-col items-center text-center p-6 bg-white rounded-2xl shadow-sm">
+          <div class="w-14 h-14 flex items-center justify-center rounded-full bg-amber-100 text-amber-600 font-bold text-xl">3</div>
+          <h3 class="mt-4 text-lg font-semibold text-gray-900">Follow your personalised plan</h3>
+          <p class="mt-2 text-gray-600 text-sm">Get a day-by-day beginner plan with coaching, tracking, and rewards.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Featured Hobbies Section ────────────────────────────────────────── -->
+  <section class="py-16 md:py-20">
+    <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-3xl md:text-4xl font-bold text-gray-900">Featured Hobbies</h2>
+      <p class="mt-2 text-gray-600 text-lg">Explore popular hobbies to get started</p>
+
+      <!-- Horizontally scrollable row -->
+      <div class="mt-8 flex gap-5 overflow-x-auto pb-4 hide-scrollbar" role="list">
+        <template x-for="hobby in featuredHobbies" :key="hobby.id">
+          <a
+            :href="'hobby-detail.html?id=' + hobby.id"
+            class="flex-shrink-0 w-64 bg-white border border-gray-200 rounded-2xl p-5 hover:shadow-lg hover:border-brand-primary transition-all cursor-pointer group"
+            role="listitem"
+            :aria-label="'View details for ' + hobby.name"
+          >
+            <!-- Hobby icon placeholder -->
+            <div class="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center text-brand-primary text-xl font-bold" aria-hidden="true">
+              <span x-text="hobby.name.charAt(0)"></span>
+            </div>
+
+            <!-- Hobby name -->
+            <h3 class="mt-3 font-semibold text-gray-900 group-hover:text-brand-primary transition-colors" x-text="hobby.name"></h3>
+
+            <!-- Difficulty badge -->
+            <span
+              class="mt-2 inline-block px-2.5 py-0.5 rounded-full text-xs font-medium capitalize"
+              :class="{
+                'bg-green-100 text-green-700': hobby.difficulty === 'beginner',
+                'bg-amber-100 text-amber-700': hobby.difficulty === 'intermediate',
+                'bg-red-100 text-red-700': hobby.difficulty === 'advanced'
+              }"
+              x-text="hobby.difficulty"
+            ></span>
+
+            <!-- Cost range -->
+            <p class="mt-2 text-sm text-gray-500">
+              <span x-text="hobby.starterCost.min === 0 && hobby.starterCost.max === 0 ? 'Free' : '$' + hobby.starterCost.min + ' – $' + hobby.starterCost.max"></span>
+            </p>
+          </a>
+        </template>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Testimonials Section ────────────────────────────────────────────── -->
+  <section class="bg-gray-50 py-16 md:py-20">
+    <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-900">What People Are Saying</h2>
+      <p class="mt-3 text-gray-600 text-center text-lg">Real stories from hobby starters</p>
+
+      <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Testimonial 1 -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-brand-primary text-white flex items-center justify-center font-semibold text-sm" aria-hidden="true">SK</div>
+            <div>
+              <p class="font-semibold text-gray-900">Sarah K.</p>
+              <p class="text-sm text-gray-500">Watercolour Painting</p>
+            </div>
+          </div>
+          <p class="mt-4 text-gray-600 text-sm leading-relaxed">"I never thought I could paint, but the step-by-step plan made it so approachable. I finished my first landscape in a week!"</p>
+        </div>
+
+        <!-- Testimonial 2 -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-brand-secondary text-white flex items-center justify-center font-semibold text-sm" aria-hidden="true">MR</div>
+            <div>
+              <p class="font-semibold text-gray-900">Marcus R.</p>
+              <p class="text-sm text-gray-500">Bodyweight Fitness</p>
+            </div>
+          </div>
+          <p class="mt-4 text-gray-600 text-sm leading-relaxed">"The daily tasks kept me accountable. I went from zero push-ups to 20 in a month. The streak system is addictive!"</p>
+        </div>
+
+        <!-- Testimonial 3 -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-amber-500 text-white flex items-center justify-center font-semibold text-sm" aria-hidden="true">JL</div>
+            <div>
+              <p class="font-semibold text-gray-900">Jamie L.</p>
+              <p class="text-sm text-gray-500">Ukulele</p>
+            </div>
+          </div>
+          <p class="mt-4 text-gray-600 text-sm leading-relaxed">"I played my first song in 3 days! The coaching avatar helped me push through when I felt stuck on chord changes."</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Footer ──────────────────────────────────────────────────────────── -->
+  <footer class="bg-gray-900 text-white py-12">
+    <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center">
+        <h2 class="text-2xl md:text-3xl font-bold">Ready to find your hobby?</h2>
+        <p class="mt-2 text-gray-400">It only takes 2 minutes to get personalised recommendations.</p>
+        <a href="onboarding.html" class="mt-6 inline-flex items-center px-6 py-3 bg-brand-primary text-white font-semibold rounded-xl hover:bg-indigo-600 transition-colors">
+          Start Now
+        </a>
+      </div>
+
+      <div class="mt-10 pt-8 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p class="text-gray-400 text-sm">&copy; 2024 StartHobby. All rights reserved.</p>
+        <div class="flex gap-6">
+          <a href="discovery.html" class="text-gray-400 hover:text-white text-sm transition-colors">Discover</a>
+          <a href="about.html" class="text-gray-400 hover:text-white text-sm transition-colors">About</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ─── Toast Notification Component ────────────────────────────────────── -->
+  <div x-data="toastStore()" x-on:show-toast.window="add($event.detail)" class="fixed top-4 right-4 z-50 flex flex-col gap-2" aria-live="polite" aria-atomic="true">
+    <template x-for="toast in toasts" :key="toast.id">
+      <div
+        x-show="toast.visible"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 translate-x-4"
+        x-transition:enter-end="opacity-100 translate-x-0"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 translate-x-0"
+        x-transition:leave-end="opacity-0 translate-x-4"
+        class="px-4 py-3 rounded-lg shadow-lg text-sm font-medium text-white max-w-xs"
+        :class="{
+          'bg-green-600': toast.type === 'success',
+          'bg-blue-600': toast.type === 'info',
+          'bg-amber-600': toast.type === 'warning'
+        }"
+        role="alert"
+      >
+        <span x-text="toast.message"></span>
+      </div>
+    </template>
+  </div>
+
+  <!-- ─── Scripts ─────────────────────────────────────────────────────────── -->
+  <script src="data.js"></script>
+  <script src="utils.js"></script>
+  <script>
+    // Toast store for Alpine.js
+    function toastStore() {
+      return {
+        toasts: [],
+        add(detail) {
+          var id = Date.now();
+          var toast = { id: id, message: detail.message, type: detail.type || 'info', visible: true };
+          this.toasts.push(toast);
+          var self = this;
+          setTimeout(function() {
+            var t = self.toasts.find(function(t) { return t.id === id; });
+            if (t) t.visible = false;
+            setTimeout(function() {
+              self.toasts = self.toasts.filter(function(t) { return t.id !== id; });
+            }, 300);
+          }, 3000);
+        }
+      };
+    }
+
+    // Landing page Alpine.js state
+    function landingPage() {
+      return {
+        coins: 0,
+        heroLoading: false,
+        featuredHobbies: [],
+
+        init() {
+          // Read coin count from localStorage
+          this.coins = getFromStorage('coins', 0);
+
+          // Get first 6 hobbies as featured
+          if (typeof HOBBIES !== 'undefined') {
+            this.featuredHobbies = HOBBIES.slice(0, 6);
+          }
+
+          // Listen for storage changes to update coins reactively
+          var self = this;
+          window.addEventListener('storage', function() {
+            self.coins = getFromStorage('coins', 0);
+          });
+        },
+
+        handleHeroCTA() {
+          if (this.heroLoading) return;
+          this.heroLoading = true;
+          setTimeout(function() {
+            window.location.href = 'onboarding.html';
+          }, 500);
+        }
+      };
+    }
+  </script>
+</body>
+</html>
