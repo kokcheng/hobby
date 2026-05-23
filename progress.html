@@ -10,6 +10,30 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+  <!-- Theme Definitions -->
+  <script src="themes.js"></script>
+  <script>
+    (function() {
+      var stored = null;
+      try { stored = JSON.parse(localStorage.getItem('sh_theme')); } catch(e) {}
+      var validIds = THEMES.filter(function(t) { return t && t.id && t.colorMap; }).map(function(t) { return t.id; });
+      var themeId;
+      if (stored && validIds.indexOf(stored) !== -1) {
+        themeId = stored;
+      } else {
+        if (stored !== null) { try { localStorage.removeItem('sh_theme'); } catch(e) {} }
+        themeId = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', themeId);
+      var theme = THEMES.find(function(t) { return t.id === themeId; });
+      if (theme && theme.colorMap) {
+        Object.keys(theme.colorMap).forEach(function(key) {
+          document.documentElement.style.setProperty('--theme-' + key, theme.colorMap[key]);
+        });
+      }
+    })();
+  </script>
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -21,14 +45,22 @@
           },
           colors: {
             brand: {
-              primary: '#6366f1',
-              secondary: '#10b981'
-            }
+              primary: 'var(--theme-brand-primary, #6366f1)',
+              secondary: 'var(--theme-brand-secondary, #10b981)'
+            },
+            surface: 'var(--theme-surface, #f9fafb)',
+            'th-bg': 'var(--theme-background, #ffffff)',
+            'th-text': 'var(--theme-text-primary, #111827)',
+            'th-text-secondary': 'var(--theme-text-secondary, #6b7280)',
+            'th-border': 'var(--theme-border, #e5e7eb)'
           }
         }
       }
     }
   </script>
+
+  <!-- Theme Engine -->
+  <script src="theme-engine.js"></script>
 
   <!-- Alpine.js CDN -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -38,7 +70,12 @@
 
   <style>
     *:focus-visible {
-      outline: 2px solid #6366f1;
+      outline: 2px solid var(--theme-brand-primary, #6366f1);
+      outline-offset: 2px;
+    }
+    /* Theme switcher option focus indicator */
+    [role="radiogroup"] [role="radio"]:focus {
+      outline: 2px solid var(--theme-brand-primary, #6366f1);
       outline-offset: 2px;
     }
     [x-cloak] { display: none !important; }
@@ -71,7 +108,7 @@
     }
   </style>
 </head>
-<body class="font-sans bg-gray-50 text-gray-900 antialiased" x-data="progressPage()" x-cloak>
+<body class="font-sans bg-th-bg text-th-text antialiased" x-data="progressPage()" x-cloak>
   <!-- Auth check: prevent flash of content for unauthenticated users -->
   <script>
     document.body.style.visibility = 'hidden';
@@ -87,7 +124,7 @@
   </script>
 
   <!-- ─── Navigation Bar ──────────────────────────────────────────────────── -->
-  <nav x-data="{ mobileOpen: false }" class="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
+  <nav x-data="{ mobileOpen: false }" class="sticky top-0 z-40 bg-surface border-b border-th-border shadow-sm">
     <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
         <!-- Logo -->
@@ -100,12 +137,72 @@
 
         <!-- Desktop Navigation Links -->
         <div class="hidden md:flex items-center gap-6">
-          <a href="index.html" class="text-gray-600 hover:text-brand-primary transition-colors">Home</a>
-          <a href="discovery.html" class="text-gray-600 hover:text-brand-primary transition-colors">Discover</a>
-          <a href="my-plan.html" class="text-gray-600 hover:text-brand-primary transition-colors">My Plan</a>
+          <a href="index.html" class="text-th-text-secondary hover:text-brand-primary transition-colors">Home</a>
+          <a href="discovery.html" class="text-th-text-secondary hover:text-brand-primary transition-colors">Discover</a>
+          <a href="my-plan.html" class="text-th-text-secondary hover:text-brand-primary transition-colors">My Plan</a>
           <a href="progress.html" class="text-brand-primary font-medium border-b-2 border-brand-primary pb-0.5">Progress</a>
-          <a href="avatar.html" class="text-gray-600 hover:text-brand-primary transition-colors">Avatar</a>
-          <a href="about.html" class="text-gray-600 hover:text-brand-primary transition-colors">About</a>
+          <a href="avatar.html" class="text-th-text-secondary hover:text-brand-primary transition-colors">Avatar</a>
+          <a href="about.html" class="text-th-text-secondary hover:text-brand-primary transition-colors">About</a>
+        </div>
+
+        <!-- Theme Switcher -->
+        <div x-data="themeSwitcher()" @click.away="close()" class="relative hidden md:block">
+          <button
+            @click="toggle()"
+            class="relative p-2 rounded-lg text-th-text-secondary hover:text-brand-primary hover:bg-gray-100 transition-colors group"
+            aria-label="Change theme"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+            </svg>
+            <!-- Tooltip -->
+            <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity pointer-events-none">
+              Change theme
+            </span>
+          </button>
+
+          <!-- Theme Selection Panel -->
+          <div
+            x-show="open"
+            x-transition:enter="transition ease-out duration-150"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-100"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
+            x-cloak
+            class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg p-2 z-50"
+            role="radiogroup"
+            aria-label="Theme selection"
+            @keydown="handleKeydown($event)"
+          >
+            <template x-for="(theme, index) in themes" :key="theme.id">
+              <button
+                role="radio"
+                :aria-checked="theme.id === activeTheme ? 'true' : 'false'"
+                :tabindex="index === focusedIndex ? '0' : '-1'"
+                @click="select(theme.id); focusedIndex = index"
+                @focus="focusedIndex = index"
+                class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors hover:bg-surface"
+                :class="theme.id === activeTheme ? 'ring-2 ring-brand-primary bg-gray-50' : ''"
+                :style="'outline-offset: 2px;'"
+                x-ref="themeOption"
+              >
+                <!-- Color Preview Swatch -->
+                <span
+                  class="w-5 h-5 rounded-full border border-th-border flex-shrink-0"
+                  :style="'background: linear-gradient(135deg, ' + theme.colorMap.background + ' 50%, ' + theme.colorMap['brand-primary'] + ' 50%);'"
+                  aria-hidden="true"
+                ></span>
+                <!-- Theme Name -->
+                <span class="flex-1 font-medium text-gray-700" x-text="theme.name"></span>
+                <!-- Active Indicator (Checkmark) -->
+                <svg x-show="theme.id === activeTheme" class="w-4 h-4 text-brand-primary flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                </svg>
+              </button>
+            </template>
+          </div>
         </div>
 
         <!-- Right: CTA + Coin Counter -->
@@ -117,7 +214,7 @@
           </div>
 
           <!-- Start Now CTA (desktop) -->
-          <a href="onboarding.html" class="hidden md:inline-flex items-center px-4 py-2 bg-brand-primary text-white font-medium rounded-lg hover:bg-indigo-600 transition-colors text-sm">
+          <a href="onboarding.html" class="hidden md:inline-flex items-center px-4 py-2 bg-brand-primary text-white font-medium rounded-lg hover:bg-brand-primary/90 transition-colors text-sm">
             Start Now
           </a>
 
@@ -125,7 +222,7 @@
           <button
             id="logout-btn"
             onclick="handleLogout()"
-            class="text-gray-500 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50"
+            class="text-th-text-secondary hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50"
             aria-label="Logout"
             style="display: none;"
           >
@@ -138,7 +235,7 @@
           <!-- Mobile Hamburger Menu -->
           <button
             @click="mobileOpen = !mobileOpen"
-            class="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+            class="md:hidden p-2 rounded-lg text-th-text-secondary hover:bg-gray-100 transition-colors"
             :aria-expanded="mobileOpen"
             aria-label="Toggle navigation menu"
           >
@@ -153,15 +250,70 @@
       </div>
 
       <!-- Mobile Menu Dropdown -->
-      <div x-show="mobileOpen" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" x-cloak class="md:hidden border-t border-gray-100 py-3">
+      <div x-show="mobileOpen" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" x-cloak class="md:hidden border-t border-th-border py-3">
         <div class="flex flex-col gap-2">
-          <a href="index.html" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50">Home</a>
-          <a href="discovery.html" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50">Discover</a>
-          <a href="my-plan.html" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50">My Plan</a>
-          <a href="progress.html" class="px-3 py-2 rounded-lg text-brand-primary font-medium bg-indigo-50">Progress</a>
-          <a href="avatar.html" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50">Avatar</a>
-          <a href="about.html" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50">About</a>
+          <a href="index.html" class="px-3 py-2 rounded-lg text-th-text-secondary hover:bg-surface">Home</a>
+          <a href="discovery.html" class="px-3 py-2 rounded-lg text-th-text-secondary hover:bg-surface">Discover</a>
+          <a href="my-plan.html" class="px-3 py-2 rounded-lg text-th-text-secondary hover:bg-surface">My Plan</a>
+          <a href="progress.html" class="px-3 py-2 rounded-lg text-brand-primary font-medium bg-brand-primary/10">Progress</a>
+          <a href="avatar.html" class="px-3 py-2 rounded-lg text-th-text-secondary hover:bg-surface">Avatar</a>
+          <a href="about.html" class="px-3 py-2 rounded-lg text-th-text-secondary hover:bg-surface">About</a>
           <a href="onboarding.html" class="mt-2 px-3 py-2 rounded-lg bg-brand-primary text-white font-medium text-center">Start Now</a>
+
+          <!-- Mobile Theme Switcher -->
+          <div x-data="themeSwitcher()" class="mt-3 pt-3 border-t border-gray-100">
+            <button
+              @click="toggle()"
+              class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-th-text-secondary hover:bg-surface transition-colors"
+              aria-label="Change theme"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+              </svg>
+              <span class="flex-1 text-left text-sm font-medium">Change theme</span>
+              <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+
+            <div
+              x-show="open"
+              x-transition:enter="transition ease-out duration-150"
+              x-transition:enter-start="opacity-0 -translate-y-1"
+              x-transition:enter-end="opacity-100 translate-y-0"
+              x-transition:leave="transition ease-in duration-100"
+              x-transition:leave-start="opacity-100 translate-y-0"
+              x-transition:leave-end="opacity-0 -translate-y-1"
+              x-cloak
+              class="mt-1 ml-8 flex flex-col gap-1"
+              role="radiogroup"
+              aria-label="Theme selection"
+              @keydown="handleKeydown($event)"
+            >
+              <template x-for="(theme, index) in themes" :key="theme.id">
+                <button
+                  role="radio"
+                  :aria-checked="theme.id === activeTheme ? 'true' : 'false'"
+                  :tabindex="index === focusedIndex ? '0' : '-1'"
+                  @click="select(theme.id); focusedIndex = index"
+                  @focus="focusedIndex = index"
+                  class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors hover:bg-surface"
+                  :class="theme.id === activeTheme ? 'ring-2 ring-brand-primary bg-gray-50' : ''"
+                  :style="'outline-offset: 2px;'"
+                >
+                  <span
+                    class="w-5 h-5 rounded-full border border-th-border flex-shrink-0"
+                    :style="'background: linear-gradient(135deg, ' + theme.colorMap.background + ' 50%, ' + theme.colorMap['brand-primary'] + ' 50%);'"
+                    aria-hidden="true"
+                  ></span>
+                  <span class="flex-1 font-medium text-gray-700" x-text="theme.name"></span>
+                  <svg x-show="theme.id === activeTheme" class="w-4 h-4 text-brand-primary flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                  </svg>
+                </button>
+              </template>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -173,26 +325,26 @@
     <!-- ─── Summary Stats Row ─────────────────────────────────────────────── -->
     <section aria-label="Progress summary" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
       <!-- Total Days Active -->
-      <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
+      <div class="bg-surface rounded-xl border border-th-border p-4 text-center">
         <div class="text-2xl font-bold text-brand-primary" x-text="totalDaysActive"></div>
-        <div class="text-xs text-gray-500 mt-1">Days Active</div>
+        <div class="text-xs text-th-text-secondary mt-1">Days Active</div>
       </div>
       <!-- Current / Best Streak -->
-      <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
+      <div class="bg-surface rounded-xl border border-th-border p-4 text-center">
         <div class="text-2xl font-bold text-brand-primary">
-          <span x-text="streak.current"></span><span class="text-sm text-gray-400 font-normal"> / <span x-text="streak.best"></span></span>
+          <span x-text="streak.current"></span><span class="text-sm text-th-text-secondary font-normal"> / <span x-text="streak.best"></span></span>
         </div>
-        <div class="text-xs text-gray-500 mt-1">Current / Best Streak</div>
+        <div class="text-xs text-th-text-secondary mt-1">Current / Best Streak</div>
       </div>
       <!-- Total Coins -->
-      <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
+      <div class="bg-surface rounded-xl border border-th-border p-4 text-center">
         <div class="text-2xl font-bold text-amber-600" x-text="coins"></div>
-        <div class="text-xs text-gray-500 mt-1">Total Coins</div>
+        <div class="text-xs text-th-text-secondary mt-1">Total Coins</div>
       </div>
       <!-- Milestones Hit -->
-      <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
+      <div class="bg-surface rounded-xl border border-th-border p-4 text-center">
         <div class="text-2xl font-bold text-brand-secondary" x-text="milestonesHit"></div>
-        <div class="text-xs text-gray-500 mt-1">Milestones Hit</div>
+        <div class="text-xs text-th-text-secondary mt-1">Milestones Hit</div>
       </div>
     </section>
 
@@ -204,8 +356,8 @@
 
         <!-- ─── Milestone Timeline ──────────────────────────────────────── -->
         <section aria-label="Milestones">
-          <h2 class="text-lg font-semibold text-gray-900 mb-4">Milestones</h2>
-          <div x-show="milestones.length === 0" class="text-sm text-gray-500">Start a hobby to see your milestones here.</div>
+          <h2 class="text-lg font-semibold text-th-text mb-4">Milestones</h2>
+          <div x-show="milestones.length === 0" class="text-sm text-th-text-secondary">Start a hobby to see your milestones here.</div>
           <div class="relative pl-6 space-y-6">
             <!-- Vertical line -->
             <div class="absolute left-[11px] top-2 bottom-2 w-0.5 bg-gray-200" aria-hidden="true"></div>
@@ -213,16 +365,16 @@
               <div class="relative flex items-start gap-3">
                 <!-- Dot -->
                 <div class="absolute -left-6 top-1 w-5 h-5 rounded-full border-2 flex items-center justify-center"
-                  :class="ms.completed ? 'bg-brand-primary border-brand-primary' : 'bg-white border-gray-300'">
+                  :class="ms.completed ? 'bg-brand-primary border-brand-primary' : 'bg-surface border-th-border'">
                   <svg x-show="ms.completed" class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                   </svg>
                 </div>
                 <!-- Content -->
                 <div>
-                  <p class="text-sm font-medium" :class="ms.completed ? 'text-gray-900' : 'text-gray-400'" x-text="ms.label"></p>
-                  <p class="text-xs" :class="ms.completed ? 'text-gray-600' : 'text-gray-400'" x-text="ms.timeframe + ' — ' + ms.description"></p>
-                  <span x-show="!ms.completed" class="inline-block mt-1 text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">Locked</span>
+                  <p class="text-sm font-medium" :class="ms.completed ? 'text-th-text' : 'text-th-text-secondary'" x-text="ms.label"></p>
+                  <p class="text-xs" :class="ms.completed ? 'text-th-text-secondary' : 'text-th-text-secondary'" x-text="ms.timeframe + ' — ' + ms.description"></p>
+                  <span x-show="!ms.completed" class="inline-block mt-1 text-xs bg-gray-100 text-th-text-secondary px-2 py-0.5 rounded">Locked</span>
                 </div>
               </div>
             </template>
@@ -231,8 +383,8 @@
 
         <!-- ─── Weekly Activity Chart ───────────────────────────────────── -->
         <section aria-label="Weekly activity chart">
-          <h2 class="text-lg font-semibold text-gray-900 mb-4">Weekly Activity</h2>
-          <div class="bg-white rounded-xl border border-gray-200 p-4">
+          <h2 class="text-lg font-semibold text-th-text mb-4">Weekly Activity</h2>
+          <div class="bg-surface rounded-xl border border-th-border p-4">
             <canvas id="weeklyChart" height="200" aria-label="Bar chart showing days completed per week for the last 4 weeks" role="img"></canvas>
           </div>
         </section>
@@ -244,27 +396,27 @@
 
         <!-- ─── Coin Balance & Rewards ──────────────────────────────────── -->
         <section aria-label="Rewards">
-          <h2 class="text-lg font-semibold text-gray-900 mb-4">Rewards</h2>
-          <div class="bg-white rounded-xl border border-gray-200 p-4 mb-4">
+          <h2 class="text-lg font-semibold text-th-text mb-4">Rewards</h2>
+          <div class="bg-surface rounded-xl border border-th-border p-4 mb-4">
             <div class="flex items-center gap-2 mb-3">
               <svg class="w-6 h-6 text-amber-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="#f59e0b"/><text x="10" y="14" text-anchor="middle" font-size="10" fill="white" font-weight="bold">$</text></svg>
-              <span class="text-xl font-bold text-gray-900" x-text="coins"></span>
-              <span class="text-sm text-gray-500">coins available</span>
+              <span class="text-xl font-bold text-th-text" x-text="coins"></span>
+              <span class="text-sm text-th-text-secondary">coins available</span>
             </div>
           </div>
           <div class="space-y-3">
             <template x-for="reward in rewards" :key="reward.id">
-              <div class="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-3">
+              <div class="bg-surface rounded-xl border border-th-border p-4 flex items-center gap-3">
                 <div class="text-3xl flex-shrink-0" x-text="reward.icon" aria-hidden="true"></div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-gray-900" x-text="reward.name"></p>
-                  <p class="text-xs text-gray-500 truncate" x-text="reward.description"></p>
-                  <p class="text-xs font-medium mt-1" :class="coins >= reward.coinCost ? 'text-brand-primary' : 'text-gray-400'" x-text="reward.coinCost + ' coins'"></p>
+                  <p class="text-sm font-medium text-th-text" x-text="reward.name"></p>
+                  <p class="text-xs text-th-text-secondary truncate" x-text="reward.description"></p>
+                  <p class="text-xs font-medium mt-1" :class="coins >= reward.coinCost ? 'text-brand-primary' : 'text-th-text-secondary'" x-text="reward.coinCost + ' coins'"></p>
                 </div>
                 <button
                   @click="confirmRedeem(reward)"
                   class="flex-shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
-                  :class="coins >= reward.coinCost ? 'bg-brand-primary text-white hover:bg-indigo-600' : 'bg-gray-100 text-gray-400 cursor-not-allowed'"
+                  :class="coins >= reward.coinCost ? 'bg-brand-primary text-white hover:bg-brand-primary/90' : 'bg-gray-100 text-th-text-secondary cursor-not-allowed'"
                   :disabled="coins < reward.coinCost"
                   x-text="'Redeem'"
                   :aria-label="'Redeem ' + reward.name + ' for ' + reward.coinCost + ' coins'"
@@ -279,19 +431,19 @@
 
     <!-- ─── Achievements Grid ─────────────────────────────────────────────── -->
     <section aria-label="Achievements" class="mt-8">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">Achievements</h2>
+      <h2 class="text-lg font-semibold text-th-text mb-4">Achievements</h2>
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
         <template x-for="ach in achievementCards" :key="ach.id">
           <div class="flip-card" :class="{ 'flipped': ach.justUnlocked }">
             <div class="flip-card-inner relative w-full min-h-[180px]">
               <!-- Front (locked state) -->
               <div class="flip-card-front absolute inset-0 w-full h-full">
-                <div class="bg-white rounded-xl border border-gray-200 p-4 text-center h-full flex flex-col items-center justify-center"
+                <div class="bg-surface rounded-xl border border-th-border p-4 text-center h-full flex flex-col items-center justify-center"
                   :class="ach.unlocked ? 'border-brand-primary unlock-pulse' : ''">
                   <div class="text-3xl mb-2" :class="ach.unlocked ? '' : 'grayscale opacity-50'" x-text="ach.icon" aria-hidden="true"></div>
-                  <p class="text-sm font-medium" :class="ach.unlocked ? 'text-gray-900' : 'text-gray-400'" x-text="ach.name"></p>
-                  <p class="text-xs mt-1" :class="ach.unlocked ? 'text-gray-600' : 'text-gray-400'" x-text="ach.description"></p>
-                  <p class="text-xs mt-2 font-medium" :class="ach.unlocked ? 'text-brand-primary' : 'text-gray-400'" x-text="ach.unlocked ? ach.dateEarned : 'Locked'"></p>
+                  <p class="text-sm font-medium" :class="ach.unlocked ? 'text-th-text' : 'text-th-text-secondary'" x-text="ach.name"></p>
+                  <p class="text-xs mt-1" :class="ach.unlocked ? 'text-th-text-secondary' : 'text-th-text-secondary'" x-text="ach.description"></p>
+                  <p class="text-xs mt-2 font-medium" :class="ach.unlocked ? 'text-brand-primary' : 'text-th-text-secondary'" x-text="ach.unlocked ? ach.dateEarned : 'Locked'"></p>
                 </div>
               </div>
               <!-- Back (unlocked reveal) -->
@@ -313,17 +465,17 @@
   <!-- ─── Confirmation Modal ──────────────────────────────────────────────── -->
   <div x-show="modalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="absolute inset-0 bg-black/50" @click="modalOpen = false"></div>
-    <div class="relative bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
-      <h3 id="modal-title" class="text-lg font-semibold text-gray-900 mb-2">Confirm Redemption</h3>
-      <p class="text-sm text-gray-600 mb-4">
+    <div class="relative bg-surface rounded-xl p-6 max-w-md w-full mx-4 shadow-xl" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+      <h3 id="modal-title" class="text-lg font-semibold text-th-text mb-2">Confirm Redemption</h3>
+      <p class="text-sm text-th-text-secondary mb-4">
         Redeem <span class="font-medium" x-text="selectedReward ? selectedReward.name : ''"></span> for
         <span class="font-medium text-brand-primary" x-text="selectedReward ? selectedReward.coinCost : ''"></span> coins?
       </p>
       <div class="flex gap-3 justify-end">
-        <button @click="modalOpen = false" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+        <button @click="modalOpen = false" class="px-4 py-2 text-sm font-medium text-th-text bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
           Cancel
         </button>
-        <button @click="executeRedeem()" class="px-4 py-2 text-sm font-medium text-white bg-brand-primary rounded-lg hover:bg-indigo-600 transition-colors">
+        <button @click="executeRedeem()" class="px-4 py-2 text-sm font-medium text-white bg-brand-primary rounded-lg hover:bg-brand-primary/90 transition-colors">
           Confirm
         </button>
       </div>
@@ -376,6 +528,57 @@
               self.toasts = self.toasts.filter(function(t) { return t.id !== id; });
             }, 300);
           }, 3000);
+        }
+      };
+    }
+
+    // Theme Switcher Alpine.js component
+    function themeSwitcher() {
+      return {
+        open: false,
+        activeTheme: '',
+        themes: [],
+        focusedIndex: 0,
+
+        init() {
+          this.themes = getValidThemes();
+          this.activeTheme = getActiveThemeId();
+          this.focusedIndex = this.themes.findIndex(function(t) { return t.id === this.activeTheme; }.bind(this));
+          if (this.focusedIndex === -1) this.focusedIndex = 0;
+        },
+
+        toggle() {
+          this.open = !this.open;
+        },
+
+        select(themeId) {
+          if (themeId === this.activeTheme) return;
+          setTheme(themeId);
+          this.activeTheme = themeId;
+        },
+
+        handleKeydown(event) {
+          var len = this.themes.length;
+          if (len === 0) return;
+
+          if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
+            event.preventDefault();
+            this.focusedIndex = (this.focusedIndex + 1) % len;
+            this.$el.querySelectorAll('[role="radio"]')[this.focusedIndex].focus();
+          } else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
+            event.preventDefault();
+            this.focusedIndex = (this.focusedIndex - 1 + len) % len;
+            this.$el.querySelectorAll('[role="radio"]')[this.focusedIndex].focus();
+          } else if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            this.select(this.themes[this.focusedIndex].id);
+          } else if (event.key === 'Escape') {
+            this.close();
+          }
+        },
+
+        close() {
+          this.open = false;
         }
       };
     }

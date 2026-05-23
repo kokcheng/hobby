@@ -10,6 +10,30 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+  <!-- Theme Definitions -->
+  <script src="themes.js"></script>
+  <script>
+    (function() {
+      var stored = null;
+      try { stored = JSON.parse(localStorage.getItem('sh_theme')); } catch(e) {}
+      var validIds = THEMES.filter(function(t) { return t && t.id && t.colorMap; }).map(function(t) { return t.id; });
+      var themeId;
+      if (stored && validIds.indexOf(stored) !== -1) {
+        themeId = stored;
+      } else {
+        if (stored !== null) { try { localStorage.removeItem('sh_theme'); } catch(e) {} }
+        themeId = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', themeId);
+      var theme = THEMES.find(function(t) { return t.id === themeId; });
+      if (theme && theme.colorMap) {
+        Object.keys(theme.colorMap).forEach(function(key) {
+          document.documentElement.style.setProperty('--theme-' + key, theme.colorMap[key]);
+        });
+      }
+    })();
+  </script>
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -21,14 +45,22 @@
           },
           colors: {
             brand: {
-              primary: '#6366f1',
-              secondary: '#10b981'
-            }
+              primary: 'var(--theme-brand-primary, #6366f1)',
+              secondary: 'var(--theme-brand-secondary, #10b981)'
+            },
+            surface: 'var(--theme-surface, #f9fafb)',
+            'th-bg': 'var(--theme-background, #ffffff)',
+            'th-text': 'var(--theme-text-primary, #111827)',
+            'th-text-secondary': 'var(--theme-text-secondary, #6b7280)',
+            'th-border': 'var(--theme-border, #e5e7eb)'
           }
         }
       }
     }
   </script>
+
+  <!-- Theme Engine -->
+  <script src="theme-engine.js"></script>
 
   <!-- Alpine.js CDN -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -39,7 +71,12 @@
   <style>
     /* Visible focus ring for accessibility */
     *:focus-visible {
-      outline: 2px solid #6366f1;
+      outline: 2px solid var(--theme-brand-primary, #6366f1);
+      outline-offset: 2px;
+    }
+    /* Theme switcher option focus indicator */
+    [role="radiogroup"] [role="radio"]:focus {
+      outline: 2px solid var(--theme-brand-primary, #6366f1);
       outline-offset: 2px;
     }
     /* Hide scrollbar on hobby cards row but keep scrollable */
@@ -47,7 +84,7 @@
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
-<body class="font-sans bg-white text-gray-900 antialiased" x-data="landingPage()">
+<body class="font-sans bg-th-bg text-th-text antialiased" x-data="landingPage()">
 
   <!-- ─── Password Gate Overlay ───────────────────────────────────────────── -->
   <div id="password-gate"
@@ -56,15 +93,15 @@
        aria-labelledby="gate-title"
        class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/80 backdrop-blur-sm"
        style="display: none;">
-    <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm mx-4">
-      <h2 id="gate-title" class="text-xl font-bold text-gray-900 text-center">
+    <div class="bg-surface rounded-2xl shadow-xl p-8 w-full max-w-sm mx-4">
+      <h2 id="gate-title" class="text-xl font-bold text-th-text text-center">
         Password Required
       </h2>
-      <p class="mt-2 text-sm text-gray-600 text-center">
+      <p class="mt-2 text-sm text-th-text-secondary text-center">
         Enter the password to continue to StartHobby.
       </p>
       <form id="gate-form" class="mt-6" novalidate>
-        <label for="gate-password" class="block text-sm font-medium text-gray-700 mb-1">
+        <label for="gate-password" class="block text-sm font-medium text-th-text mb-1">
           Password
         </label>
         <input
@@ -72,13 +109,13 @@
           type="password"
           maxlength="128"
           autocomplete="current-password"
-          class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-sm"
+          class="w-full px-4 py-2.5 border border-th-border rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-sm"
           placeholder="Enter password"
         />
         <div id="gate-error" aria-live="assertive" class="mt-2 text-sm text-red-600 min-h-[1.25rem]"></div>
         <button
           type="submit"
-          class="mt-4 w-full px-4 py-2.5 bg-brand-primary text-white font-medium rounded-lg hover:bg-indigo-600 transition-colors text-sm"
+          class="mt-4 w-full px-4 py-2.5 bg-brand-primary text-white font-medium rounded-lg hover:bg-brand-primary/90 transition-colors text-sm"
         >
           Enter
         </button>
@@ -87,7 +124,7 @@
   </div>
 
   <!-- ─── Navigation Bar ──────────────────────────────────────────────────── -->
-  <nav x-data="{ mobileOpen: false }" class="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
+  <nav x-data="{ mobileOpen: false }" class="sticky top-0 z-40 bg-surface border-b border-th-border shadow-sm">
     <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
         <!-- Logo -->
@@ -101,11 +138,71 @@
         <!-- Desktop Navigation Links -->
         <div class="hidden md:flex items-center gap-6">
           <a href="index.html" class="text-brand-primary font-medium border-b-2 border-brand-primary pb-0.5">Home</a>
-          <a href="discovery.html" class="text-gray-600 hover:text-brand-primary transition-colors">Discover</a>
-          <a href="my-plan.html" class="text-gray-600 hover:text-brand-primary transition-colors">My Plan</a>
-          <a href="progress.html" class="text-gray-600 hover:text-brand-primary transition-colors">Progress</a>
-          <a href="avatar.html" class="text-gray-600 hover:text-brand-primary transition-colors">Avatar</a>
-          <a href="about.html" class="text-gray-600 hover:text-brand-primary transition-colors">About</a>
+          <a href="discovery.html" class="text-th-text-secondary hover:text-brand-primary transition-colors">Discover</a>
+          <a href="my-plan.html" class="text-th-text-secondary hover:text-brand-primary transition-colors">My Plan</a>
+          <a href="progress.html" class="text-th-text-secondary hover:text-brand-primary transition-colors">Progress</a>
+          <a href="avatar.html" class="text-th-text-secondary hover:text-brand-primary transition-colors">Avatar</a>
+          <a href="about.html" class="text-th-text-secondary hover:text-brand-primary transition-colors">About</a>
+        </div>
+
+        <!-- Theme Switcher -->
+        <div x-data="themeSwitcher()" @click.away="close()" class="relative hidden md:block">
+          <button
+            @click="toggle()"
+            class="relative p-2 rounded-lg text-th-text-secondary hover:text-brand-primary hover:bg-gray-100 transition-colors group"
+            aria-label="Change theme"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+            </svg>
+            <!-- Tooltip -->
+            <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity pointer-events-none">
+              Change theme
+            </span>
+          </button>
+
+          <!-- Theme Selection Panel -->
+          <div
+            x-show="open"
+            x-transition:enter="transition ease-out duration-150"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-100"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
+            x-cloak
+            class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg p-2 z-50"
+            role="radiogroup"
+            aria-label="Theme selection"
+            @keydown="handleKeydown($event)"
+          >
+            <template x-for="(theme, index) in themes" :key="theme.id">
+              <button
+                role="radio"
+                :aria-checked="theme.id === activeTheme ? 'true' : 'false'"
+                :tabindex="index === focusedIndex ? '0' : '-1'"
+                @click="select(theme.id); focusedIndex = index"
+                @focus="focusedIndex = index"
+                class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors hover:bg-surface"
+                :class="theme.id === activeTheme ? 'ring-2 ring-brand-primary bg-gray-50' : ''"
+                :style="'outline-offset: 2px;'"
+                x-ref="themeOption"
+              >
+                <!-- Color Preview Swatch -->
+                <span
+                  class="w-5 h-5 rounded-full border border-th-border flex-shrink-0"
+                  :style="'background: linear-gradient(135deg, ' + theme.colorMap.background + ' 50%, ' + theme.colorMap['brand-primary'] + ' 50%);'"
+                  aria-hidden="true"
+                ></span>
+                <!-- Theme Name -->
+                <span class="flex-1 font-medium text-gray-700" x-text="theme.name"></span>
+                <!-- Active Indicator (Checkmark) -->
+                <svg x-show="theme.id === activeTheme" class="w-4 h-4 text-brand-primary flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                </svg>
+              </button>
+            </template>
+          </div>
         </div>
 
         <!-- Right: CTA + Coin Counter + Logout -->
@@ -117,7 +214,7 @@
           </div>
 
           <!-- Start Now CTA (desktop) -->
-          <a href="onboarding.html" class="hidden md:inline-flex items-center px-4 py-2 bg-brand-primary text-white font-medium rounded-lg hover:bg-indigo-600 transition-colors text-sm">
+          <a href="onboarding.html" class="hidden md:inline-flex items-center px-4 py-2 bg-brand-primary text-white font-medium rounded-lg hover:bg-brand-primary/90 transition-colors text-sm">
             Start Now
           </a>
 
@@ -125,7 +222,7 @@
           <button
             id="logout-btn"
             onclick="handleLogout()"
-            class="text-gray-500 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50"
+            class="text-th-text-secondary hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50"
             aria-label="Logout"
             style="display: none;"
           >
@@ -138,7 +235,7 @@
           <!-- Mobile Hamburger Menu -->
           <button
             @click="mobileOpen = !mobileOpen"
-            class="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+            class="md:hidden p-2 rounded-lg text-th-text-secondary hover:bg-gray-100 transition-colors"
             :aria-expanded="mobileOpen"
             aria-label="Toggle navigation menu"
           >
@@ -153,15 +250,70 @@
       </div>
 
       <!-- Mobile Menu Dropdown -->
-      <div x-show="mobileOpen" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" x-cloak class="md:hidden border-t border-gray-100 py-3">
+      <div x-show="mobileOpen" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" x-cloak class="md:hidden border-t border-th-border py-3">
         <div class="flex flex-col gap-2">
-          <a href="index.html" class="px-3 py-2 rounded-lg text-brand-primary font-medium bg-indigo-50">Home</a>
-          <a href="discovery.html" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50">Discover</a>
-          <a href="my-plan.html" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50">My Plan</a>
-          <a href="progress.html" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50">Progress</a>
-          <a href="avatar.html" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50">Avatar</a>
-          <a href="about.html" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50">About</a>
+          <a href="index.html" class="px-3 py-2 rounded-lg text-brand-primary font-medium bg-brand-primary/10">Home</a>
+          <a href="discovery.html" class="px-3 py-2 rounded-lg text-th-text-secondary hover:bg-surface">Discover</a>
+          <a href="my-plan.html" class="px-3 py-2 rounded-lg text-th-text-secondary hover:bg-surface">My Plan</a>
+          <a href="progress.html" class="px-3 py-2 rounded-lg text-th-text-secondary hover:bg-surface">Progress</a>
+          <a href="avatar.html" class="px-3 py-2 rounded-lg text-th-text-secondary hover:bg-surface">Avatar</a>
+          <a href="about.html" class="px-3 py-2 rounded-lg text-th-text-secondary hover:bg-surface">About</a>
           <a href="onboarding.html" class="mt-2 px-3 py-2 rounded-lg bg-brand-primary text-white font-medium text-center">Start Now</a>
+
+          <!-- Mobile Theme Switcher -->
+          <div x-data="themeSwitcher()" class="mt-3 pt-3 border-t border-gray-100">
+            <button
+              @click="toggle()"
+              class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-th-text-secondary hover:bg-surface transition-colors"
+              aria-label="Change theme"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+              </svg>
+              <span class="flex-1 text-left text-sm font-medium">Change theme</span>
+              <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+
+            <div
+              x-show="open"
+              x-transition:enter="transition ease-out duration-150"
+              x-transition:enter-start="opacity-0 -translate-y-1"
+              x-transition:enter-end="opacity-100 translate-y-0"
+              x-transition:leave="transition ease-in duration-100"
+              x-transition:leave-start="opacity-100 translate-y-0"
+              x-transition:leave-end="opacity-0 -translate-y-1"
+              x-cloak
+              class="mt-1 ml-8 flex flex-col gap-1"
+              role="radiogroup"
+              aria-label="Theme selection"
+              @keydown="handleKeydown($event)"
+            >
+              <template x-for="(theme, index) in themes" :key="theme.id">
+                <button
+                  role="radio"
+                  :aria-checked="theme.id === activeTheme ? 'true' : 'false'"
+                  :tabindex="index === focusedIndex ? '0' : '-1'"
+                  @click="select(theme.id); focusedIndex = index"
+                  @focus="focusedIndex = index"
+                  class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors hover:bg-surface"
+                  :class="theme.id === activeTheme ? 'ring-2 ring-brand-primary bg-gray-50' : ''"
+                  :style="'outline-offset: 2px;'"
+                >
+                  <span
+                    class="w-5 h-5 rounded-full border border-th-border flex-shrink-0"
+                    :style="'background: linear-gradient(135deg, ' + theme.colorMap.background + ' 50%, ' + theme.colorMap['brand-primary'] + ' 50%);'"
+                    aria-hidden="true"
+                  ></span>
+                  <span class="flex-1 font-medium text-gray-700" x-text="theme.name"></span>
+                  <svg x-show="theme.id === activeTheme" class="w-4 h-4 text-brand-primary flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                  </svg>
+                </button>
+              </template>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -169,16 +321,16 @@
 
   <!-- ─── Hero Section ────────────────────────────────────────────────────── -->
   <section class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 text-center">
-    <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+    <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-th-text leading-tight">
       Find a hobby that actually<br class="hidden sm:block"> fits your life.
     </h1>
-    <p class="mt-4 text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
+    <p class="mt-4 text-lg md:text-xl text-th-text-secondary max-w-2xl mx-auto">
       Answer a few questions, get personalised recommendations, and follow a guided plan to start something new — in minutes, not months.
     </p>
     <button
       @click="handleHeroCTA()"
       :disabled="heroLoading"
-      class="mt-8 inline-flex items-center gap-2 px-8 py-4 bg-brand-primary text-white font-semibold text-lg rounded-xl hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-200 disabled:opacity-70 disabled:cursor-not-allowed"
+      class="mt-8 inline-flex items-center gap-2 px-8 py-4 bg-brand-primary text-white font-semibold text-lg rounded-xl hover:bg-brand-primary/90 transition-all shadow-lg shadow-brand-primary/20 disabled:opacity-70 disabled:cursor-not-allowed"
     >
       <svg x-show="heroLoading" class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24" aria-hidden="true">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -189,31 +341,31 @@
   </section>
 
   <!-- ─── How It Works Section ────────────────────────────────────────────── -->
-  <section class="bg-gray-50 py-16 md:py-20">
+  <section class="bg-surface py-16 md:py-20">
     <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
-      <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-900">How It Works</h2>
-      <p class="mt-3 text-gray-600 text-center text-lg">Three simple steps to your new hobby</p>
+      <h2 class="text-3xl md:text-4xl font-bold text-center text-th-text">How It Works</h2>
+      <p class="mt-3 text-th-text-secondary text-center text-lg">Three simple steps to your new hobby</p>
 
       <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
         <!-- Step 1 -->
-        <div class="flex flex-col items-center text-center p-6 bg-white rounded-2xl shadow-sm">
-          <div class="w-14 h-14 flex items-center justify-center rounded-full bg-indigo-100 text-brand-primary font-bold text-xl">1</div>
-          <h3 class="mt-4 text-lg font-semibold text-gray-900">Tell us about yourself</h3>
-          <p class="mt-2 text-gray-600 text-sm">Answer quick questions about your time, budget, and interests.</p>
+        <div class="flex flex-col items-center text-center p-6 bg-surface rounded-2xl shadow-sm">
+          <div class="w-14 h-14 flex items-center justify-center rounded-full bg-brand-primary/20 text-brand-primary font-bold text-xl">1</div>
+          <h3 class="mt-4 text-lg font-semibold text-th-text">Tell us about yourself</h3>
+          <p class="mt-2 text-th-text-secondary text-sm">Answer quick questions about your time, budget, and interests.</p>
         </div>
 
         <!-- Step 2 -->
-        <div class="flex flex-col items-center text-center p-6 bg-white rounded-2xl shadow-sm">
-          <div class="w-14 h-14 flex items-center justify-center rounded-full bg-emerald-100 text-brand-secondary font-bold text-xl">2</div>
-          <h3 class="mt-4 text-lg font-semibold text-gray-900">Get matched hobbies</h3>
-          <p class="mt-2 text-gray-600 text-sm">Our engine scores hobbies against your preferences and shows the best fits.</p>
+        <div class="flex flex-col items-center text-center p-6 bg-surface rounded-2xl shadow-sm">
+          <div class="w-14 h-14 flex items-center justify-center rounded-full bg-brand-secondary/20 text-brand-secondary font-bold text-xl">2</div>
+          <h3 class="mt-4 text-lg font-semibold text-th-text">Get matched hobbies</h3>
+          <p class="mt-2 text-th-text-secondary text-sm">Our engine scores hobbies against your preferences and shows the best fits.</p>
         </div>
 
         <!-- Step 3 -->
-        <div class="flex flex-col items-center text-center p-6 bg-white rounded-2xl shadow-sm">
+        <div class="flex flex-col items-center text-center p-6 bg-surface rounded-2xl shadow-sm">
           <div class="w-14 h-14 flex items-center justify-center rounded-full bg-amber-100 text-amber-600 font-bold text-xl">3</div>
-          <h3 class="mt-4 text-lg font-semibold text-gray-900">Follow your personalised plan</h3>
-          <p class="mt-2 text-gray-600 text-sm">Get a day-by-day beginner plan with coaching, tracking, and rewards.</p>
+          <h3 class="mt-4 text-lg font-semibold text-th-text">Follow your personalised plan</h3>
+          <p class="mt-2 text-th-text-secondary text-sm">Get a day-by-day beginner plan with coaching, tracking, and rewards.</p>
         </div>
       </div>
     </div>
@@ -222,25 +374,25 @@
   <!-- ─── Featured Hobbies Section ────────────────────────────────────────── -->
   <section class="py-16 md:py-20">
     <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
-      <h2 class="text-3xl md:text-4xl font-bold text-gray-900">Featured Hobbies</h2>
-      <p class="mt-2 text-gray-600 text-lg">Explore popular hobbies to get started</p>
+      <h2 class="text-3xl md:text-4xl font-bold text-th-text">Featured Hobbies</h2>
+      <p class="mt-2 text-th-text-secondary text-lg">Explore popular hobbies to get started</p>
 
       <!-- Horizontally scrollable row -->
       <div class="mt-8 flex gap-5 overflow-x-auto pb-4 hide-scrollbar" role="list">
         <template x-for="hobby in featuredHobbies" :key="hobby.id">
           <a
             :href="'hobby-detail.html?id=' + hobby.id"
-            class="flex-shrink-0 w-64 bg-white border border-gray-200 rounded-2xl p-5 hover:shadow-lg hover:border-brand-primary transition-all cursor-pointer group"
+            class="flex-shrink-0 w-64 bg-surface border border-th-border rounded-2xl p-5 hover:shadow-lg hover:border-brand-primary transition-all cursor-pointer group"
             role="listitem"
             :aria-label="'View details for ' + hobby.name"
           >
             <!-- Hobby icon placeholder -->
-            <div class="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center text-brand-primary text-xl font-bold" aria-hidden="true">
+            <div class="w-12 h-12 rounded-xl bg-brand-primary/20 flex items-center justify-center text-brand-primary text-xl font-bold" aria-hidden="true">
               <span x-text="hobby.name.charAt(0)"></span>
             </div>
 
             <!-- Hobby name -->
-            <h3 class="mt-3 font-semibold text-gray-900 group-hover:text-brand-primary transition-colors" x-text="hobby.name"></h3>
+            <h3 class="mt-3 font-semibold text-th-text group-hover:text-brand-primary transition-colors" x-text="hobby.name"></h3>
 
             <!-- Difficulty badge -->
             <span
@@ -254,7 +406,7 @@
             ></span>
 
             <!-- Cost range -->
-            <p class="mt-2 text-sm text-gray-500">
+            <p class="mt-2 text-sm text-th-text-secondary">
               <span x-text="hobby.starterCost.min === 0 && hobby.starterCost.max === 0 ? 'Free' : '$' + hobby.starterCost.min + ' – $' + hobby.starterCost.max"></span>
             </p>
           </a>
@@ -264,46 +416,46 @@
   </section>
 
   <!-- ─── Testimonials Section ────────────────────────────────────────────── -->
-  <section class="bg-gray-50 py-16 md:py-20">
+  <section class="bg-surface py-16 md:py-20">
     <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
-      <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-900">What People Are Saying</h2>
-      <p class="mt-3 text-gray-600 text-center text-lg">Real stories from hobby starters</p>
+      <h2 class="text-3xl md:text-4xl font-bold text-center text-th-text">What People Are Saying</h2>
+      <p class="mt-3 text-th-text-secondary text-center text-lg">Real stories from hobby starters</p>
 
       <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Testimonial 1 -->
-        <div class="bg-white rounded-2xl p-6 shadow-sm">
+        <div class="bg-surface rounded-2xl p-6 shadow-sm">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-brand-primary text-white flex items-center justify-center font-semibold text-sm" aria-hidden="true">SK</div>
             <div>
-              <p class="font-semibold text-gray-900">Sarah K.</p>
-              <p class="text-sm text-gray-500">Watercolour Painting</p>
+              <p class="font-semibold text-th-text">Sarah K.</p>
+              <p class="text-sm text-th-text-secondary">Watercolour Painting</p>
             </div>
           </div>
-          <p class="mt-4 text-gray-600 text-sm leading-relaxed">"I never thought I could paint, but the step-by-step plan made it so approachable. I finished my first landscape in a week!"</p>
+          <p class="mt-4 text-th-text-secondary text-sm leading-relaxed">"I never thought I could paint, but the step-by-step plan made it so approachable. I finished my first landscape in a week!"</p>
         </div>
 
         <!-- Testimonial 2 -->
-        <div class="bg-white rounded-2xl p-6 shadow-sm">
+        <div class="bg-surface rounded-2xl p-6 shadow-sm">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-brand-secondary text-white flex items-center justify-center font-semibold text-sm" aria-hidden="true">MR</div>
             <div>
-              <p class="font-semibold text-gray-900">Marcus R.</p>
-              <p class="text-sm text-gray-500">Bodyweight Fitness</p>
+              <p class="font-semibold text-th-text">Marcus R.</p>
+              <p class="text-sm text-th-text-secondary">Bodyweight Fitness</p>
             </div>
           </div>
-          <p class="mt-4 text-gray-600 text-sm leading-relaxed">"The daily tasks kept me accountable. I went from zero push-ups to 20 in a month. The streak system is addictive!"</p>
+          <p class="mt-4 text-th-text-secondary text-sm leading-relaxed">"The daily tasks kept me accountable. I went from zero push-ups to 20 in a month. The streak system is addictive!"</p>
         </div>
 
         <!-- Testimonial 3 -->
-        <div class="bg-white rounded-2xl p-6 shadow-sm">
+        <div class="bg-surface rounded-2xl p-6 shadow-sm">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-amber-500 text-white flex items-center justify-center font-semibold text-sm" aria-hidden="true">JL</div>
             <div>
-              <p class="font-semibold text-gray-900">Jamie L.</p>
-              <p class="text-sm text-gray-500">Ukulele</p>
+              <p class="font-semibold text-th-text">Jamie L.</p>
+              <p class="text-sm text-th-text-secondary">Ukulele</p>
             </div>
           </div>
-          <p class="mt-4 text-gray-600 text-sm leading-relaxed">"I played my first song in 3 days! The coaching avatar helped me push through when I felt stuck on chord changes."</p>
+          <p class="mt-4 text-th-text-secondary text-sm leading-relaxed">"I played my first song in 3 days! The coaching avatar helped me push through when I felt stuck on chord changes."</p>
         </div>
       </div>
     </div>
@@ -314,17 +466,17 @@
     <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center">
         <h2 class="text-2xl md:text-3xl font-bold">Ready to find your hobby?</h2>
-        <p class="mt-2 text-gray-400">It only takes 2 minutes to get personalised recommendations.</p>
-        <a href="onboarding.html" class="mt-6 inline-flex items-center px-6 py-3 bg-brand-primary text-white font-semibold rounded-xl hover:bg-indigo-600 transition-colors">
+        <p class="mt-2 text-th-text-secondary">It only takes 2 minutes to get personalised recommendations.</p>
+        <a href="onboarding.html" class="mt-6 inline-flex items-center px-6 py-3 bg-brand-primary text-white font-semibold rounded-xl hover:bg-brand-primary/90 transition-colors">
           Start Now
         </a>
       </div>
 
       <div class="mt-10 pt-8 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p class="text-gray-400 text-sm">&copy; 2024 StartHobby. All rights reserved.</p>
+        <p class="text-th-text-secondary text-sm">&copy; 2024 StartHobby. All rights reserved.</p>
         <div class="flex gap-6">
-          <a href="discovery.html" class="text-gray-400 hover:text-white text-sm transition-colors">Discover</a>
-          <a href="about.html" class="text-gray-400 hover:text-white text-sm transition-colors">About</a>
+          <a href="discovery.html" class="text-th-text-secondary hover:text-white text-sm transition-colors">Discover</a>
+          <a href="about.html" class="text-th-text-secondary hover:text-white text-sm transition-colors">About</a>
         </div>
       </div>
     </div>
@@ -439,6 +591,57 @@
               self.toasts = self.toasts.filter(function(t) { return t.id !== id; });
             }, 300);
           }, 3000);
+        }
+      };
+    }
+
+    // Theme Switcher Alpine.js component
+    function themeSwitcher() {
+      return {
+        open: false,
+        activeTheme: '',
+        themes: [],
+        focusedIndex: 0,
+
+        init() {
+          this.themes = getValidThemes();
+          this.activeTheme = getActiveThemeId();
+          this.focusedIndex = this.themes.findIndex(function(t) { return t.id === this.activeTheme; }.bind(this));
+          if (this.focusedIndex === -1) this.focusedIndex = 0;
+        },
+
+        toggle() {
+          this.open = !this.open;
+        },
+
+        select(themeId) {
+          if (themeId === this.activeTheme) return;
+          setTheme(themeId);
+          this.activeTheme = themeId;
+        },
+
+        handleKeydown(event) {
+          var len = this.themes.length;
+          if (len === 0) return;
+
+          if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
+            event.preventDefault();
+            this.focusedIndex = (this.focusedIndex + 1) % len;
+            this.$el.querySelectorAll('[role="radio"]')[this.focusedIndex].focus();
+          } else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
+            event.preventDefault();
+            this.focusedIndex = (this.focusedIndex - 1 + len) % len;
+            this.$el.querySelectorAll('[role="radio"]')[this.focusedIndex].focus();
+          } else if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            this.select(this.themes[this.focusedIndex].id);
+          } else if (event.key === 'Escape') {
+            this.close();
+          }
+        },
+
+        close() {
+          this.open = false;
         }
       };
     }
